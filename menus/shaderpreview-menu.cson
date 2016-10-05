@@ -1,0 +1,5 @@
+'context-menu':
+    '[data-path$=frag]': [
+        { label: 'Preview', command: 'shaderpreview:preview' },
+        { type: 'separator' },
+    ]

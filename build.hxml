@@ -1,0 +1,6 @@
+-js lib/shaderpreview.js
+-cp src
+-lib hxatom
+ShaderPreview
+-D hxnodejs_no_version_warning
+-D noEmbedJS

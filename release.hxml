@@ -1,0 +1,6 @@
+build.hxml
+-dce full
+--no-traces
+-lib closure
+-D closure_overwrite
+#-D closure_advanced
