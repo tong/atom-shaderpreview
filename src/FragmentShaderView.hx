@@ -13,7 +13,7 @@ import js.html.webgl.RenderingContext;
 typedef Surface = Dynamic;
 typedef Parameters = Dynamic;
 
-class ShaderView {
+class FragmentShaderView {
 
     static var screenVertexShaderSource = '
         attribute vec3 position;
@@ -195,12 +195,41 @@ class ShaderView {
 		gl.bindTexture( GL.TEXTURE_2D, frontTarget.texture );
 		// Render front buffer to screen
 		gl.bindFramebuffer( GL.FRAMEBUFFER, null );
-		gl.clear( GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT );
+        gl.clear( GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT );
 		gl.drawArrays( GL.TRIANGLES, 0, 6 );
-		// Swap buffers
+
+        // Swap buffers
 		var tmp = frontTarget;
 		frontTarget = backTarget;
 		backTarget = tmp;
+    }
+
+    public function dispose() {
+
+        currentProgram = null;
+
+        /*
+        var numTextureUnits = gl.getParameter( GL.MAX_TEXTURE_IMAGE_UNITS );
+        for( i in 0...numTextureUnits ) {
+            gl.activeTexture( GL.TEXTURE0 + i );
+            gl.bindTexture( GL.TEXTURE_2D, null );
+            gl.bindTexture( GL.TEXTURE_CUBE_MAP, null );
+        }
+        gl.bindBuffer(GL.ARRAY_BUFFER, null);
+        gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, null);
+        gl.bindRenderbuffer(GL.RENDERBUFFER, null);
+        gl.bindFramebuffer(GL.FRAMEBUFFER, null);
+        */
+
+        /*
+        // Delete all resources
+        gl.deleteTexture(someTexture);
+        gl.deleteTexture(someOtherTexture);
+        gl.deleteBuffer(someBuffer);
+        gl.deleteBuffer(someOtherBuffer);
+        gl.deleteRenderbuffer(someRenderbuffer);
+        gl.deleteFramebuffer(someFramebuffer);
+        */
     }
 
     function createShader( src : String, type : Int ) : Shader {

@@ -1,18 +1,28 @@
 {
   "name": "shaderpreview",
   "main": "./lib/shaderpreview.js",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fragment shader preview",
-  "activationCommands": {
-  },
+  "keywords": ["shader","fragment","gl","glsl"],
   "repository": "https://github.com/tong/atom-shaderpreview",
   "license": "MIT",
   "engines": {
     "atom": ">=1.10.0 <2.0.0"
   },
   "dependencies": {
+      "jquery": ""
   },
   "deserializers": {
       "ShaderPreview": "deserialize"
+  },
+  "configSchema": {
+      "quality": {
+          "title": "Shader Quality",
+          "description": "Default shader render quality",
+          "type": "integer",
+          "default": 1,
+          "minimum": 1,
+          "maximum": 5
+      }
   }
 }

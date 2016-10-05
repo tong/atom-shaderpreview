@@ -15,8 +15,6 @@ class ShaderPreviewView {
     public var element(default,null) : Element;
 
     var preview : ShaderPreview;
-    var canvas : CanvasElement;
-    var view : ShaderView;
     var animationFrameId : Int;
 
     public function new( preview : ShaderPreview ) {
@@ -25,49 +23,36 @@ class ShaderPreviewView {
 
         element = document.createDivElement();
         element.classList.add( 'shaderpreview' );
+        element.appendChild( preview.canvas );
 
-		canvas = document.createCanvasElement();
-		element.appendChild( canvas );
+        //element.addEventListener( 'DOMNodeInserted', handleDOMInsert, false );
 
-        element.addEventListener( 'DOMNodeInserted', handleDOMInsert, false );
+        requestAnimationFrame();
+
+        /*
+        var observer = new js.html.MutationObserver( function(r,o) {
+            trace(r);
+            trace(o);
+        });
+        var config = { attributes: true, childList: true, characterData: true };
+        observer.observe( element, config);
 
         //canvas.addEventListener( 'resize', handleResize, false );
+        */
     }
-
-    /*
-    public function attach() {
-        trace("attach");
-    }
-
-    public function attached() {
-        trace("attached");
-    }
-    */
 
     public function dispose() {
         cancelAnimationFrame();
-    }
-
-    function handleDOMInsert(e) {
-
-        trace("handleDOMInsert");
-
-        element.removeEventListener( 'DOMNodeInserted', handleDOMInsert );
-
-        view = new ShaderView( canvas );
-        view.resize( element.offsetWidth, element.offsetHeight );
-        view.compile( sys.io.File.getContent( preview.getPath() ) );
-        view.render();
-
-        element.addEventListener( 'click', handleClick, false );
-
-        requestAnimationFrame();
+        preview = null;
     }
 
     function update( time : Float ) {
         animationFrameId = window.requestAnimationFrame( update );
-        if( view != null ) {
-            view.render();
+        if( preview != null ) {
+            if( element.offsetWidth != preview.canvas.width || element.offsetHeight != preview.canvas.height ) {
+                preview.resize( element.offsetWidth, element.offsetHeight );
+            }
+            preview.render();
         }
     }
 
@@ -82,6 +67,12 @@ class ShaderPreviewView {
         }
     }
 
+    /*
+    function handleResize(e) {
+        preview.resize( element.offsetWidth, element.offsetHeight );
+    }
+    */
+
     function handleClick(e) {
         if( animationFrameId == null )
             requestAnimationFrame()
@@ -89,11 +80,4 @@ class ShaderPreviewView {
             cancelAnimationFrame();
     }
 
-    function handleResize(e) {
-        trace(e.target);
-        view.resize( element.offsetWidth, element.offsetHeight );
-        //canvas.width = element.innerWidth;
-        //canvas.height = element.innerHeight;
-        //trace(element.innerWidth,element.innerHeight);
-    }
 }

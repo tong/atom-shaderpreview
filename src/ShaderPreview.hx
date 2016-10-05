@@ -1,13 +1,8 @@
 
 import js.Browser.document;
-import js.html.AudioElement;
-import js.html.audio.AudioContext;
-import js.node.Fs;
 import atom.CompositeDisposable;
-import atom.Disposable;
 import atom.File;
 
-using Lambda;
 using StringTools;
 using haxe.io.Path;
 
@@ -15,7 +10,7 @@ private typedef ShaderPreviewState = Dynamic;
 
 @:keep
 @:expose
-class ShaderPreview {
+class ShaderPreview extends FragmentShaderView {
 
     static inline function __init__() {
 
@@ -27,7 +22,8 @@ class ShaderPreview {
         }));
     }
 
-    static inline var PREFIX = 'shaderpreview://';
+    static inline var NAME = 'shaderpreview';
+    static inline var PREFIX = '$NAME://';
 
     static var allowedFileTypes = ['frag'];
     static var disposables : CompositeDisposable;
@@ -39,11 +35,21 @@ class ShaderPreview {
         //Atom.workspace.observeTextEditors( function(e) trace(e) );
 
         disposables.add( Atom.workspace.addOpener( openURI ) );
-        disposables.add( Atom.commands.add( 'atom-workspace', 'shaderpreview:preview', function(e) {
+        disposables.add( Atom.commands.add( 'atom-workspace', '$NAME:preview', function(e) {
             var path : String = untyped e.target.getAttribute( 'data-path' );
             if( sys.FileSystem.exists( path ) )
-                Atom.workspace.open( 'shaderpreview://$path' );
+                Atom.workspace.open( '$PREFIX$path' );
         } ) );
+
+        Atom.workspace.onDidDestroyPaneItem( function(e){
+            try {
+                if( Type.getClassName( Type.getClass( e.item ) ) == 'ShaderPreview' ) {
+                    e.item.dispose();
+                }
+            } catch(e:Dynamic) {
+                trace(e);
+            }
+        });
     }
 
     static function deactivate() {
@@ -52,7 +58,9 @@ class ShaderPreview {
 
     static function openURI( uri : String ) {
         if( uri.startsWith( PREFIX ) ) {
-            return new ShaderPreview( uri.substr( PREFIX.length ) );
+            var preview = new ShaderPreview( uri.substr( PREFIX.length ) );
+            disposables.add( untyped preview );
+            return preview;
         }
         return null;
     }
@@ -65,10 +73,15 @@ class ShaderPreview {
 
     ////////////////////////////////////////////////////////////////////////////
 
-	var file : atom.File;
+	var file : File;
 
 	function new( path : String ) {
+
+        super( document.createCanvasElement(), Atom.config.get( 'shaderpreview.quality' ) );
 		this.file = new File( path );
+
+        compile( sys.io.File.getContent( file.getPath() ) );
+        //render();
 	}
 
 	public inline function serialize() {
@@ -78,8 +91,10 @@ class ShaderPreview {
         }
     }
 
-	public inline function dispose() {
+    /*
+	public  function dispose() {
 	}
+    */
 
 	public inline function getPath() {
         return file.getPath();
