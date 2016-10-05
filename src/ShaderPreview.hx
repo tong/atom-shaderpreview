@@ -1,6 +1,7 @@
 
 import js.Browser.document;
 import atom.CompositeDisposable;
+import atom.Disposable;
 import atom.File;
 
 using StringTools;
@@ -42,6 +43,7 @@ class ShaderPreview extends FragmentShaderView {
         } ) );
 
         Atom.workspace.onDidDestroyPaneItem( function(e){
+            //TODO
             try {
                 if( Type.getClassName( Type.getClass( e.item ) ) == 'ShaderPreview' ) {
                     e.item.dispose();
@@ -67,21 +69,28 @@ class ShaderPreview extends FragmentShaderView {
 
     /*
     static function consumeStatusBar( pane ) {
-        //pane.addRightTile( { item: new Statusbar().element, priority:0 } );
+        pane.addRightTile( { item: new StatusbarView(), priority:0 } );
     }
     */
 
     ////////////////////////////////////////////////////////////////////////////
 
 	var file : File;
+	var fileChangeListener : Disposable;
 
 	function new( path : String ) {
 
         super( document.createCanvasElement(), Atom.config.get( 'shaderpreview.quality' ) );
 		this.file = new File( path );
 
-        compile( sys.io.File.getContent( file.getPath() ) );
-        //render();
+        fileChangeListener = file.onDidChange( handleSourceFileChange );
+        file.read( true ).then(function(src) {
+            try {
+                compile( src );
+            } catch(e:Dynamic) {
+                Atom.notifications.addWarning( e );
+            }
+        });
 	}
 
 	public inline function serialize() {
@@ -91,10 +100,10 @@ class ShaderPreview extends FragmentShaderView {
         }
     }
 
-    /*
-	public  function dispose() {
+	public override function dispose() {
+        super.dispose();
+        fileChangeListener.dispose();
 	}
-    */
 
 	public inline function getPath() {
         return file.getPath();
@@ -115,4 +124,10 @@ class ShaderPreview extends FragmentShaderView {
 	public static inline function deserialize( state : Dynamic ) {
 		return new ShaderPreview( state.path );
 	}
+
+    function handleSourceFileChange() {
+        file.read( true ).then(function(src){
+            compile( src );
+        });
+    }
 }
