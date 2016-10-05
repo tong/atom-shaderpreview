@@ -29,6 +29,8 @@ class ShaderPreviewView {
 
         requestAnimationFrame();
 
+        element.addEventListener( 'click', function() toggleAnimationFrame(), false );
+
         /*
         var observer = new js.html.MutationObserver( function(r,o) {
             trace(r);
@@ -54,6 +56,10 @@ class ShaderPreviewView {
             }
             preview.render();
         }
+    }
+
+    inline function toggleAnimationFrame() {
+        if( animationFrameId == null ) requestAnimationFrame() else cancelAnimationFrame();
     }
 
     inline function requestAnimationFrame() {
