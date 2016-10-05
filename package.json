@@ -1,9 +1,9 @@
 {
   "name": "shaderpreview",
   "main": "./lib/shaderpreview.js",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Fragment shader preview",
-  "keywords": ["shader","fragment","gl","glsl"],
+  "keywords": ["shader","fragment","gl","glsl","webgl","opengl"],
   "repository": "https://github.com/tong/atom-shaderpreview",
   "license": "MIT",
   "engines": {
