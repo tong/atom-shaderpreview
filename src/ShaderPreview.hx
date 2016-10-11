@@ -1,5 +1,7 @@
 
 import js.Browser.document;
+import js.Browser.window;
+import js.html.DivElement;
 import atom.CompositeDisposable;
 import atom.Disposable;
 import atom.File;
@@ -14,13 +16,7 @@ private typedef ShaderPreviewState = Dynamic;
 class ShaderPreview extends FragmentShaderView {
 
     static inline function __init__() {
-
         untyped module.exports = ShaderPreview;
-
-		disposables = new CompositeDisposable();
-        disposables.add( Atom.views.addViewProvider( ShaderPreview, function(shader:ShaderPreview) {
-            return new ShaderPreviewView( shader ).element;
-        }));
     }
 
     static inline var NAME = 'shaderpreview';
@@ -32,6 +28,8 @@ class ShaderPreview extends FragmentShaderView {
     static function activate( state : ShaderPreviewState ) {
 
         trace( 'Atom-shaderpreview' );
+
+        disposables = new CompositeDisposable();
 
         //Atom.workspace.observeTextEditors( function(e) trace(e) );
 
@@ -60,8 +58,8 @@ class ShaderPreview extends FragmentShaderView {
 
     static function openURI( uri : String ) {
         if( uri.startsWith( PREFIX ) ) {
-            var preview = new ShaderPreview( uri.substr( PREFIX.length ) );
-            disposables.add( untyped preview );
+            var preview = new ShaderPreview( { path: uri.substr( PREFIX.length ) } );
+            //disposables.add( untyped preview );
             return preview;
         }
         return null;
@@ -73,15 +71,25 @@ class ShaderPreview extends FragmentShaderView {
     }
     */
 
+    static inline function deserialize( state : Dynamic ) {
+        return new ShaderPreview( state );
+    }
+
     ////////////////////////////////////////////////////////////////////////////
 
 	var file : File;
 	var fileChangeListener : Disposable;
+    var element : DivElement;
+    var animationFrameId : Int;
 
-	function new( path : String ) {
+	function new( state ) {
 
         super( document.createCanvasElement(), Atom.config.get( 'shaderpreview.quality' ) );
-		this.file = new File( path );
+		this.file = new File( state.path );
+
+        element = document.createDivElement();
+        element.classList.add( 'shaderpreview' );
+        element.appendChild( canvas );
 
         fileChangeListener = file.onDidChange( handleSourceFileChange );
         file.read( true ).then(function(src) {
@@ -91,9 +99,13 @@ class ShaderPreview extends FragmentShaderView {
                 Atom.notifications.addWarning( e );
             }
         });
+
+        element.addEventListener( 'click', function() toggleAnimationFrame(), false );
+
+        requestAnimationFrame();
 	}
 
-	public inline function serialize() {
+	public function serialize() {
         return {
             deserializer: 'ShaderPreview',
             path: file.getPath()
@@ -121,13 +133,39 @@ class ShaderPreview extends FragmentShaderView {
         return "file://" + file.getPath().urlEncode();
     }
 
-	public static inline function deserialize( state : Dynamic ) {
-		return new ShaderPreview( state.path );
-	}
+    function update( time : Float ) {
+        animationFrameId = window.requestAnimationFrame( update );
+        if( element.offsetWidth != canvas.width || element.offsetHeight != canvas.height ) {
+            resize( element.offsetWidth, element.offsetHeight );
+        }
+        render();
+    }
+
+    inline function toggleAnimationFrame() {
+        if( animationFrameId == null ) requestAnimationFrame() else cancelAnimationFrame();
+    }
+
+    inline function requestAnimationFrame() {
+        animationFrameId = window.requestAnimationFrame( update );
+    }
+
+    inline function cancelAnimationFrame() {
+        if( animationFrameId != null ) {
+            window.cancelAnimationFrame( animationFrameId );
+            animationFrameId = null;
+        }
+    }
 
     function handleSourceFileChange() {
         file.read( true ).then(function(src){
             compile( src );
         });
+    }
+
+    function handleClick(e) {
+        if( animationFrameId == null )
+            requestAnimationFrame()
+        else
+            cancelAnimationFrame();
     }
 }
