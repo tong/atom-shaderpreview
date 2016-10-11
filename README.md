@@ -1,4 +1,4 @@
 
-# Fragment Shader Viewer
+# Fragment Shader Preview
 
 Live preview fragment shaders.
