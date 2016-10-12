@@ -1,4 +1,5 @@
 
+import js.Browser.console;
 import js.Browser.document;
 import js.Browser.window;
 import js.html.DivElement;
@@ -30,8 +31,6 @@ class ShaderPreview extends FragmentShaderView {
         trace( 'Atom-shaderpreview' );
 
         disposables = new CompositeDisposable();
-
-        //Atom.workspace.observeTextEditors( function(e) trace(e) );
 
         disposables.add( Atom.workspace.addOpener( openURI ) );
         disposables.add( Atom.commands.add( 'atom-workspace', '$NAME:preview', function(e) {
@@ -71,7 +70,7 @@ class ShaderPreview extends FragmentShaderView {
     }
     */
 
-    static inline function deserialize( state : Dynamic ) {
+    static inline function deserialize( state ) {
         return new ShaderPreview( state );
     }
 
@@ -91,18 +90,13 @@ class ShaderPreview extends FragmentShaderView {
         element.classList.add( 'shaderpreview' );
         element.appendChild( canvas );
 
-        fileChangeListener = file.onDidChange( handleSourceFileChange );
-        file.read( true ).then(function(src) {
-            try {
-                compile( src );
-            } catch(e:Dynamic) {
-                Atom.notifications.addWarning( e );
-            }
-        });
+        fileChangeListener = file.onDidChange( compileFile );
 
-        element.addEventListener( 'click', function() toggleAnimationFrame(), false );
+        compileFile();
 
         requestAnimationFrame();
+
+        element.addEventListener( 'click', function() toggleAnimationFrame(), false );
 	}
 
 	public function serialize() {
@@ -122,7 +116,7 @@ class ShaderPreview extends FragmentShaderView {
     }
 
     public inline function getIconName() {
-        return 'git-branch';
+        return 'file-media';
     }
 
     public inline function getTitle() {
@@ -131,6 +125,17 @@ class ShaderPreview extends FragmentShaderView {
 
     public inline function getURI() {
         return "file://" + file.getPath().urlEncode();
+    }
+
+    function compileFile() {
+        file.read( true ).then( compileShader );
+    }
+
+    function compileShader( src : String ) {
+        try compile( src ) catch(e:Dynamic) {
+            console.error(e);
+            Atom.notifications.addError( e );
+        }
     }
 
     function update( time : Float ) {
@@ -157,9 +162,7 @@ class ShaderPreview extends FragmentShaderView {
     }
 
     function handleSourceFileChange() {
-        file.read( true ).then(function(src){
-            compile( src );
-        });
+        compileFile();
     }
 
     function handleClick(e) {
